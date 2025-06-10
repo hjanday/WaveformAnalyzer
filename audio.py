@@ -143,6 +143,13 @@ bot.run(TOKEN)
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+# Get the correct port from the environment
+PORT = int(os.environ.get("PORT", 10000))  # fallback to 10000 if not set
+
 class DummyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -150,7 +157,8 @@ class DummyHandler(BaseHTTPRequestHandler):
         self.wfile.write(b"Bot is running.")
 
 def run_dummy_server():
-    server = HTTPServer(("0.0.0.0", 10000), DummyHandler)
+    server = HTTPServer(("0.0.0.0", PORT), DummyHandler)
     server.serve_forever()
 
 threading.Thread(target=run_dummy_server, daemon=True).start()
+
