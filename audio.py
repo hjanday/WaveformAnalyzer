@@ -109,6 +109,9 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
     return buffer
 
 # === Discord Command ===
+@bot.command()
+async def testcmd(ctx):
+    await ctx.send(f'{ctx.author.mention} - hi')
 
 @bot.command()
 async def checktrack(ctx, dropbox_link: str):
