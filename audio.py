@@ -137,13 +137,6 @@ async def checktrack(ctx, dropbox_link: str):
     except Exception as e:
         await ctx.send(f"❌ Error: {str(e)}")
 
-# === Start Bot ===
-bot.run(TOKEN)
-
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
-
-import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -161,4 +154,9 @@ def run_dummy_server():
     server.serve_forever()
 
 threading.Thread(target=run_dummy_server, daemon=True).start()
+
+# === Start Bot ===
+bot.run(TOKEN)
+
+
 
