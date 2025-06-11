@@ -122,35 +122,65 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
 
 # === Discord Command ===
 @bot.command()
-async def testcmd(ctx):
-    await ctx.send(f'{ctx.author.mention} - hi')
+async def testcmd(ctx, dropbox_link: str):
+        local_audio = os.path.join(tmpdir, "audio.wav")
+        filename = extract_filename_from_url(dropbox_link)
+
+        download_from_dropbox(dropbox_link, local_audio)
+
+        if not filename.lower().endswith(".wav"):
+            await ctx.send("❌ Only `.wav` files are supported right now.")
+            return
+
+        image_buffer = generate_spectrogram_to_memory(local_audio, filename)
+
+        discord_file = discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
+        await ctx.send(
+        content=f"✅ {ctx.author.mention}, here's your spectrogram:",
+        file=discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
+)
+
+
+
 
 @bot.command()
+@bot.command()
 async def checktrack(ctx, dropbox_link: str):
-    print("Analysis on " + dropbox_link)
+    print(">>> checktrack command triggered")
+    print(f">>> ctx: {ctx}")
+    print(f">>> dropbox_link: {dropbox_link}")
     await ctx.send("Generating Image - Please wait...")
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
+            print(">>> Temp directory created")
             local_audio = os.path.join(tmpdir, "audio.wav")
             filename = extract_filename_from_url(dropbox_link)
+            print(f">>> Extracted filename: {filename}")
 
             download_from_dropbox(dropbox_link, local_audio)
+            print(">>> File downloaded")
 
             if not filename.lower().endswith(".wav"):
+                print(">>> File not a .wav file")
                 await ctx.send("❌ Only `.wav` files are supported right now.")
                 return
 
+            print(">>> Generating spectrogram...")
             image_buffer = generate_spectrogram_to_memory(local_audio, filename)
+            print(">>> Spectrogram generated")
 
             discord_file = discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
             await ctx.send(
-            content=f"✅ {ctx.author.mention}, here's your spectrogram:",
-            file=discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
-)
+                content=f"✅ {ctx.author.mention}, here's your spectrogram:",
+                file=discord_file
+            )
 
     except Exception as e:
-        await ctx.send(f"❌ Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        await ctx.send(f"❌ Error: {e}")
+
 
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
