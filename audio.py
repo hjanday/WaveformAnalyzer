@@ -33,6 +33,8 @@ def dropbox_direct_url(shared_url):
     return shared_url.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "").replace("?dl=1", "")
 
 def download_from_dropbox(dropbox_url, dest_path):
+    print(f">>> Downloading from: {url}")
+
     url = dropbox_direct_url(dropbox_url)
     r = requests.get(url, stream=True)
     if r.status_code != 200:
@@ -40,6 +42,8 @@ def download_from_dropbox(dropbox_url, dest_path):
     with open(dest_path, 'wb') as f:
         for chunk in r.iter_content(1024):
             f.write(chunk)
+    print(f">>> File size: {os.path.getsize(dest_path)} bytes")
+
 
 # === Spectrogram Generator (In-Memory) ===
 
@@ -52,7 +56,10 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
     bitrate_str = f"{int(bitrate) // 1000} kbps" if bitrate else "Unknown bitrate"
     format_info = f"{sample_rate} Hz, {bit_depth} bits, channel {channels}"
 
+    print(">>> Loading audio with librosa...")
     y, sr = librosa.load(audio_path, sr=None)
+    print(f">>> Audio length: {len(y)}, Sample rate: {sr}")
+
     S = librosa.stft(y, n_fft=4096, hop_length=512)
     S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)
 
@@ -105,7 +112,10 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
     buffer = io.BytesIO()
     fig.savefig(buffer, format='png', dpi=150, bbox_inches='tight')
     plt.close(fig)
+    print(">>> Saving image to buffer...")
     buffer.seek(0)
+    print(f">>> Image buffer size: {len(buffer.getvalue())} bytes")
+
     return buffer
 
 # === Discord Command ===
