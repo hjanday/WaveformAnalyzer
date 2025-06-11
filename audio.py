@@ -12,7 +12,8 @@ from pydub.utils import mediainfo
 import io
 from dotenv import load_dotenv
 from imageio_ffmpeg import get_ffmpeg_exe
-
+import soundfile as sf
+from scipy.signal import stft
 
 ffmpeg_path = get_ffmpeg_exe()
 os.environ["PATH"] = os.path.dirname(ffmpeg_path) + os.pathsep + os.environ.get("PATH", "")
@@ -51,6 +52,7 @@ def download_from_dropbox(dropbox_url, dest_path):
 # === Spectrogram Generator (In-Memory) ===
 
 def generate_spectrogram_to_memory(audio_path, title_filename):
+    # Metadata using pydub (still works for format info)
     info = mediainfo(audio_path)
     sample_rate = info.get("sample_rate", "Unknown")
     bit_depth = info.get("bits_per_sample", "Unknown")
@@ -59,14 +61,20 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
     bitrate_str = f"{int(bitrate) // 1000} kbps" if bitrate else "Unknown bitrate"
     format_info = f"{sample_rate} Hz, {bit_depth} bits, channel {channels}"
 
-    print(">>> Loading audio with librosa...")
-    y, sr = librosa.load(audio_path, sr=None)
-    print(f">>> Audio length: {len(y)}, Sample rate: {sr}")
+    # Read audio data (no librosa)
+    y, sr = sf.read(audio_path)
+    if y.ndim > 1:
+        y = y.mean(axis=1)  # convert to mono if stereo
 
-    S = librosa.stft(y, n_fft=4096, hop_length=512)
-    S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)
+    # Compute STFT
+    f, t, Zxx = stft(y, fs=sr, nperseg=4096, noverlap=4096 - 512)
+    S_db = 20 * np.log10(np.abs(Zxx) + 1e-6)  # amplitude to dB
 
-    # Styling
+    # Plotting
+    import matplotlib
+    matplotlib.use('Agg')  # headless backend
+    import matplotlib.pyplot as plt
+
     plt.style.use('dark_background')
     plt.rcParams.update({
         'axes.facecolor': 'black',
@@ -83,42 +91,33 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
     })
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    img = librosa.display.specshow(S_db, sr=sr, hop_length=512, x_axis='time', y_axis='linear', cmap='plasma', ax=ax)
+    img = ax.pcolormesh(t, f, S_db, shading='gouraud', cmap='plasma')
+    ax.set_ylim(0, sr // 2)
 
-    # Dynamic frequency axis
-    nyquist = sr // 2
+    # Frequency ticks
     step_khz = 2000
-    freqs = np.arange(0, nyquist + 1, step_khz)
-    ax.set_ylim(0, nyquist)
+    freqs = np.arange(0, (sr // 2) + 1, step_khz)
     ax.set_yticks(freqs)
     ax.set_yticklabels([f"{f // 1000} kHz" if f >= 1000 else f"{f} Hz" for f in freqs])
 
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Frequency (Hz)")
 
-    # Add dB colorbar
     cbar = fig.colorbar(img, ax=ax, format="%+2.0f dB")
     cbar.set_label("Amplitude (dB)", color='white')
     cbar.ax.yaxis.set_tick_params(color='white')
     plt.setp(cbar.ax.get_yticklabels(), color='white')
 
-    # Add title with full margin
     fig.suptitle(
         f"{title_filename}\nStream 1 / 1: PCM {format_info}, {bitrate_str}",
         fontsize=10, ha='left', x=0.01, y=1.05
     )
-
-    # Manual layout adjustment (prevents cutoff)
     fig.subplots_adjust(left=0.15, right=0.95, top=0.85, bottom=0.12)
 
-    # Save to memory
     buffer = io.BytesIO()
     fig.savefig(buffer, format='png', dpi=150, bbox_inches='tight')
     plt.close(fig)
-    print(">>> Saving image to buffer...")
     buffer.seek(0)
-    print(f">>> Image buffer size: {len(buffer.getvalue())} bytes")
-
     return buffer
 
 # === Discord Command ===
