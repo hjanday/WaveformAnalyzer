@@ -37,7 +37,6 @@ def dropbox_direct_url(shared_url):
     return shared_url.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "").replace("?dl=1", "")
 
 def download_from_dropbox(dropbox_url, dest_path):
-    print(f">>> Downloading from: {url}")
 
     url = dropbox_direct_url(dropbox_url)
     r = requests.get(url, stream=True)
