@@ -11,7 +11,11 @@ import librosa.display
 from pydub.utils import mediainfo
 import io
 from dotenv import load_dotenv
+from imageio_ffmpeg import get_ffmpeg_exe
 
+
+ffmpeg_path = get_ffmpeg_exe()
+os.environ["PATH"] = os.path.dirname(ffmpeg_path) + os.pathsep + os.environ.get("PATH", "")
 # === DISCORD CONFIG ===
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
