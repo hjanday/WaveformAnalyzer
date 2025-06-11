@@ -123,27 +123,13 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
 # === Discord Command ===
 @bot.command()
 async def testcmd(ctx, dropbox_link: str):
-        local_audio = os.path.join(tmpdir, "audio.wav")
-        filename = extract_filename_from_url(dropbox_link)
-
-        download_from_dropbox(dropbox_link, local_audio)
-
-        if not filename.lower().endswith(".wav"):
-            await ctx.send("❌ Only `.wav` files are supported right now.")
-            return
-
-        image_buffer = generate_spectrogram_to_memory(local_audio, filename)
-
-        discord_file = discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
         await ctx.send(
-        content=f"✅ {ctx.author.mention}, here's your spectrogram:",
-        file=discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
+      "hi"
 )
 
 
 
 
-@bot.command()
 @bot.command()
 async def checktrack(ctx, dropbox_link: str):
     print(">>> checktrack command triggered")
