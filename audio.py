@@ -27,7 +27,7 @@ bot = commands.Bot(command_prefix="&", intents=intents)
 # === Dropbox Helpers ===
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
+    print(f"Logged in as {bot.user}", flush=True)
 
 def extract_filename_from_url(url):
     parsed = urllib.parse.urlparse(url)
@@ -46,7 +46,7 @@ def download_from_dropbox(dropbox_url, dest_path):
     with open(dest_path, 'wb') as f:
         for chunk in r.iter_content(1024):
             f.write(chunk)
-    print(f">>> File size: {os.path.getsize(dest_path)} bytes")
+    print(f">>> File size: {os.path.getsize(dest_path)} bytes", flush=True)
 
 
 # === Spectrogram Generator (In-Memory) ===
@@ -122,7 +122,7 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
 
 # === Discord Command ===
 @bot.command()
-async def testcmd(ctx, dropbox_link: str):
+async def testcmd(ctx):
         await ctx.send(
       "hi"
 )
@@ -132,29 +132,29 @@ async def testcmd(ctx, dropbox_link: str):
 
 @bot.command()
 async def checktrack(ctx, dropbox_link: str):
-    print(">>> checktrack command triggered")
-    print(f">>> ctx: {ctx}")
-    print(f">>> dropbox_link: {dropbox_link}")
+    print(">>> checktrack command triggered", flush=True)
+    print(f">>> ctx: {ctx}", flush=True)
+    print(f">>> dropbox_link: {dropbox_link}", flush=True)
     await ctx.send("Generating Image - Please wait...")
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
-            print(">>> Temp directory created")
+            print(">>> Temp directory created", flush=True)
             local_audio = os.path.join(tmpdir, "audio.wav")
             filename = extract_filename_from_url(dropbox_link)
-            print(f">>> Extracted filename: {filename}")
+            print(f">>> Extracted filename: {filename}", flush=True)
 
             download_from_dropbox(dropbox_link, local_audio)
-            print(">>> File downloaded")
+            print(">>> File downloaded", flush=True)
 
             if not filename.lower().endswith(".wav"):
-                print(">>> File not a .wav file")
+                print(">>> File not a .wav file", flush=True)
                 await ctx.send("❌ Only `.wav` files are supported right now.")
                 return
 
-            print(">>> Generating spectrogram...")
+            print(">>> Generating spectrogram...", flush=True)
             image_buffer = generate_spectrogram_to_memory(local_audio, filename)
-            print(">>> Spectrogram generated")
+            print(">>> Spectrogram generated", flush=True)
 
             discord_file = discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
             await ctx.send(
