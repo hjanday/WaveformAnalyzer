@@ -5,7 +5,6 @@ A simple Discord bot that generates spectrogram images from `.wav` audio files h
 ## Features
 
 - Generates spectrograms from audio files
-- Only supports `.wav` format
 - Displays audio metadata (sample rate, bit depth, channels)
 - Responds with an image in Discord
 - Works with Dropbox public share links
