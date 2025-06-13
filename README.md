@@ -52,3 +52,13 @@ requests
 
 Install them with 
 ```pip install -r requirements.txt```
+
+## Updates/Changelog
+### June 13 2025
+-- Added ability to handle various audio file types
+
+## Todo/Backlog
+[] Speed up spectrogram generation (cpu acceleration)
+[] Find hosting platform (currently locally hosted) --> looking at EC2, Railway
+[] Deploy bot on Docker
+[] Clean up code and add cogs

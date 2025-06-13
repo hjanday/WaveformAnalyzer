@@ -12,26 +12,29 @@ from pydub.utils import mediainfo
 import io
 from dotenv import load_dotenv
 
-# === DISCORD CONFIG ===
+# Load environment variables and initialize bot
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="&", intents=intents)
 
-# === Dropbox Helpers ===
+# On ready debug command
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
+# Get filename from dropbox url
 def extract_filename_from_url(url):
     parsed = urllib.parse.urlparse(url)
     path = urllib.parse.unquote(parsed.path)
     return os.path.basename(path)
 
+# Replace url to get raw data
 def dropbox_direct_url(shared_url):
     return shared_url.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "").replace("?dl=1", "")
 
+# Creates a temp dir to store the audio file and delete the directory once processed
 def download_from_dropbox(dropbox_url, dest_path):
     url = dropbox_direct_url(dropbox_url)
     r = requests.get(url, stream=True)
@@ -41,9 +44,9 @@ def download_from_dropbox(dropbox_url, dest_path):
         for chunk in r.iter_content(1024):
             f.write(chunk)
 
-# === Spectrogram Generator (In-Memory) ===
-
+# Generates spectrogram -- in memory and can be expensive
 def generate_spectrogram_to_memory(audio_path, title_filename):
+    # Define file metadata
     info = mediainfo(audio_path)
     sample_rate = info.get("sample_rate", "Unknown")
     bit_depth = info.get("bits_per_sample", "Unknown")
@@ -51,7 +54,8 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
     bitrate = info.get("bit_rate", None)
     bitrate_str = f"{int(bitrate) // 1000} kbps" if bitrate else "Unknown bitrate"
     format_info = f"{sample_rate} Hz, {bit_depth} bits, channel {channels}"
-
+    
+    # Use librosa, define audio series (y), sampling rate (SR), spectrogram (S), decibel spectrogram (S_db)
     y, sr = librosa.load(audio_path, sr=None)
     S = librosa.stft(y, n_fft=4096, hop_length=512)
     S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)
@@ -71,13 +75,13 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
         'savefig.edgecolor': 'black',
         'font.family': 'monospace',
     })
-
+    # define figure and axis size
     fig, ax = plt.subplots(figsize=(10, 5))
     img = librosa.display.specshow(S_db, sr=sr, hop_length=512, x_axis='time', y_axis='linear', cmap='plasma', ax=ax)
 
     # Dynamic frequency axis
     nyquist = sr // 2
-    step_khz = 2000
+    step_khz = 2000 
     freqs = np.arange(0, nyquist + 1, step_khz)
     ax.set_ylim(0, nyquist)
     ax.set_yticks(freqs)
@@ -108,7 +112,7 @@ def generate_spectrogram_to_memory(audio_path, title_filename):
     buffer.seek(0)
     return buffer
 
-# === Discord Command ===
+# main command to pull data and get spec
 
 @bot.command()
 async def checktrack(ctx, dropbox_link: str):
@@ -134,7 +138,7 @@ async def checktrack(ctx, dropbox_link: str):
 
             discord_file = discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
             await ctx.send(
-            content=f"✅ {ctx.author.mention}, here's your spectrogram:",
+            content=f"{ctx.author.mention}, here's your spectrogram for {filename}",
             file=discord.File(fp=image_buffer, filename=f"{filename}_spectrogram.png")
 )
 
