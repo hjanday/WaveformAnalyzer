@@ -1,5 +1,8 @@
 # Discord Spectrogram Bot
 
+***As of July 01, 2025 - this repo is archived and the new source code has been moved to a private repo alongside another collaborator***
+
+
 A simple Discord bot that generates spectrogram images from `.wav` audio files hosted on Dropbox.
 
 ## Features
